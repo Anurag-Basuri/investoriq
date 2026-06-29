@@ -4,6 +4,9 @@
 
 Built with **Next.js** · **LangGraph.js** · **Llama 3 / DeepSeek / Mistral** · **Yahoo Finance** · **Alpha Vantage**
 
+🔗 **Live Demo**: [https://inversteriq.netlify.app](https://inversteriq.netlify.app)
+🐙 **GitHub Repository**: [https://github.com/Anurag-Basuri/investoriq](https://github.com/Anurag-Basuri/investoriq)
+
 ---
 
 ## Overview
