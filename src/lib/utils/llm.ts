@@ -29,6 +29,12 @@ function getProviderChain(): ProviderConfig[] {
       apiKey: process.env.OPENROUTER_API_KEY,
       baseURL: "https://openrouter.ai/api/v1",
     },
+    {
+      name: "HuggingFace",
+      modelName: "Qwen/Qwen3.6-27B:featherless-ai",
+      apiKey: process.env.HUGGINGFACE_API_KEY,
+      baseURL: "https://router.huggingface.co/v1",
+    },
   ];
 }
 
@@ -42,7 +48,7 @@ export async function invokeLLM(
   options: {
     temperature?: number;
     maxRetries?: number;
-  } = {}
+  } = {},
 ): Promise<string> {
   const { temperature = 0.1, maxRetries = 2 } = options;
   let lastError: Error | null = null;
@@ -51,7 +57,9 @@ export async function invokeLLM(
   const activeProviders = getProviderChain().filter((p) => !!p.apiKey);
 
   if (activeProviders.length === 0) {
-    throw new Error("No LLM API keys configured (Groq, DeepSeek, or OpenRouter required).");
+    throw new Error(
+      "No LLM API keys configured (Groq, DeepSeek, OpenRouter, or HuggingFace required).",
+    );
   }
 
   for (const provider of activeProviders) {
@@ -69,16 +77,16 @@ export async function invokeLLM(
 
         // Use invoke (ChatOpenAI automatically formats string to HumanMessage)
         const response = await llm.invoke(prompt);
-        
+
         const text =
           typeof response.content === "string"
             ? response.content
             : JSON.stringify(response.content);
-            
+
         return text;
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
-        
+
         // 429 Too Many Requests, or specific provider error codes
         const isRateLimit =
           lastError.message.includes("429") ||
@@ -89,14 +97,20 @@ export async function invokeLLM(
         if (isRateLimit && attempt < maxRetries) {
           const delay = Math.min(1000 * Math.pow(2, attempt), 15000);
           console.warn(
-            `LLM rate limited (${provider.name} - attempt ${attempt + 1}/${maxRetries + 1}). Retrying in ${delay}ms...`
+            `LLM rate limited (${provider.name} - attempt ${attempt + 1}/${maxRetries + 1}). Retrying in ${delay}ms...`,
           );
           await new Promise((resolve) => setTimeout(resolve, delay));
           continue;
         }
 
-        if (isRateLimit || lastError.message.includes("503") || lastError.message.includes("502")) {
-          console.warn(`Provider ${provider.name} exhausted or unavailable. Trying next provider...`);
+        if (
+          isRateLimit ||
+          lastError.message.includes("503") ||
+          lastError.message.includes("502")
+        ) {
+          console.warn(
+            `Provider ${provider.name} exhausted or unavailable. Trying next provider...`,
+          );
           break; // Try next provider in the chain
         }
 
@@ -115,17 +129,17 @@ export async function invokeLLM(
  */
 export function parseLLMJson<T = Record<string, unknown>>(response: string): T {
   let cleaned = response.trim();
-  
+
   // Try to extract content inside code fences if present
   const jsonMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (jsonMatch && jsonMatch[1]) {
     cleaned = jsonMatch[1].trim();
   }
-  
+
   // If no fences, try to extract the first { and last }
-  const startIdx = cleaned.indexOf('{');
-  const endIdx = cleaned.lastIndexOf('}');
-  
+  const startIdx = cleaned.indexOf("{");
+  const endIdx = cleaned.lastIndexOf("}");
+
   if (startIdx !== -1 && endIdx !== -1 && endIdx >= startIdx) {
     cleaned = cleaned.substring(startIdx, endIdx + 1);
   }
