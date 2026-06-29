@@ -33,7 +33,7 @@ function getProviderChain(): ProviderConfig[] {
       name: "HuggingFace",
       modelName: "meta-llama/Meta-Llama-3-8B-Instruct",
       apiKey: process.env.HUGGINGFACE_API_KEY,
-      baseURL: "https://api-inference.huggingface.co/v1",
+      baseURL: "https://router.huggingface.co/hf-inference/v1",
     },
   ];
 }
