@@ -609,7 +609,6 @@
 .metricCard {
   text-align: left;
   position: relative;
-  overflow: hidden;
 }
 
 .metricCard::before {
