@@ -233,7 +233,7 @@ function ResearchContent() {
             {fd && (
               <div className={styles.priceBlock}>
                 <span className={`${styles.currentPrice} mono`}>
-                  {formatCurrency(fd.currentPrice)}
+                  {formatCurrency(fd.currentPrice, fd.currency)}
                 </span>
                 <span
                   className={`${styles.priceChange} mono`}
@@ -248,7 +248,7 @@ function ResearchContent() {
                   ) : (
                     <ArrowDownRight size={16} />
                   )}
-                  {formatCurrency(Math.abs(fd.priceChange.amount))} (
+                  {formatCurrency(Math.abs(fd.priceChange.amount), fd.currency)} (
                   {formatPercent(fd.priceChange.percent)})
                 </span>
               </div>
@@ -319,11 +319,11 @@ function ResearchContent() {
                 )}
                 {activeTab === "news" && nd && <NewsTab data={nd} />}
                 {activeTab === "competition" && cd && (
-                  <CompetitionTab data={cd} />
+                  <CompetitionTab data={cd} currency={fd?.currency} />
                 )}
                 {activeTab === "risk" && rd && <RiskTab data={rd} />}
                 {activeTab === "memo" && decision && (
-                  <MemoTab decision={decision} />
+                  <MemoTab decision={decision} currency={fd?.currency || "USD"} />
                 )}
               </div>
             </div>
@@ -385,7 +385,7 @@ function FinancialsTab({
   const metrics = [
     {
       label: "Market Cap",
-      value: formatCurrency(data.marketCap, true),
+      value: formatCurrency(data.marketCap, data.currency, true),
       icon: DollarSign,
     },
     {
@@ -429,12 +429,12 @@ function FinancialsTab({
     { label: "Beta", value: data.beta.toFixed(2) },
     { label: "Dividend Yield", value: formatPercent(data.dividendYield) },
     {
-      label: "52W High",
-      value: formatCurrency(data.fiftyTwoWeekHigh),
+      label: "52 Week High",
+      value: formatCurrency(data.fiftyTwoWeekHigh, data.currency),
     },
     {
-      label: "52W Low",
-      value: formatCurrency(data.fiftyTwoWeekLow),
+      label: "52 Week Low",
+      value: formatCurrency(data.fiftyTwoWeekLow, data.currency),
     },
   ];
 
@@ -588,8 +588,10 @@ function NewsTab({
 
 function CompetitionTab({
   data,
+  currency = "USD",
 }: {
   data: NonNullable<ResearchState["competitiveData"]>;
+  currency?: string;
 }) {
   return (
     <div className={styles.competitionTab}>
@@ -626,7 +628,7 @@ function CompetitionTab({
                 <tr key={c.ticker}>
                   <td>{c.name}</td>
                   <td className="mono">{c.ticker}</td>
-                  <td className="mono">{formatCurrency(c.marketCap, true)}</td>
+                  <td className="mono">{formatCurrency(c.marketCap, currency, true)}</td>
                   <td className="mono">
                     {c.peRatio > 0 ? c.peRatio.toFixed(1) : "N/A"}
                   </td>
@@ -745,8 +747,10 @@ function RiskTab({
 
 function MemoTab({
   decision,
+  currency,
 }: {
   decision: NonNullable<ResearchState["decision"]>;
+  currency: string;
 }) {
   return (
     <div className={styles.memoTab}>
@@ -778,8 +782,8 @@ function MemoTab({
           <div>
             <span className={styles.targetLabel}>Target Price Range</span>
             <span className={`${styles.targetValue} mono`}>
-              {formatCurrency(decision.targetPriceRange.low)} –{" "}
-              {formatCurrency(decision.targetPriceRange.high)}
+              {formatCurrency(decision.targetPriceRange.low, currency)} –{" "}
+              {formatCurrency(decision.targetPriceRange.high, currency)}
             </span>
           </div>
           <div>

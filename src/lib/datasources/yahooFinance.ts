@@ -3,6 +3,7 @@
 // that vary between versions. We handle this safely with optional chaining.
 
 export interface YahooQuoteData {
+  currency: string;
   currentPrice: number;
   previousClose: number;
   priceChange: number;
@@ -80,6 +81,7 @@ export async function getQuoteData(ticker: string): Promise<YahooQuoteData | nul
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const quote: any = await yf.quote(ticker);
     return {
+      currency: quote?.currency || "USD",
       currentPrice: quote?.regularMarketPrice || 0,
       previousClose: quote?.regularMarketPreviousClose || 0,
       priceChange: quote?.regularMarketChange || 0,

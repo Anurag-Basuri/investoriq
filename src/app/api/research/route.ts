@@ -25,6 +25,13 @@ export async function POST(request: NextRequest) {
 
     const result = await runResearch(companyName.trim());
 
+    if (!result.tickerSymbol) {
+      return NextResponse.json(
+        { error: `Could not resolve "${companyName}" to a valid stock ticker. Please check the spelling or make sure the company is publicly traded.` },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json({
       success: true,
       data: result,
