@@ -29,6 +29,12 @@ function getProviderChain(): ProviderConfig[] {
       apiKey: process.env.OPENROUTER_API_KEY,
       baseURL: "https://openrouter.ai/api/v1",
     },
+    {
+      name: "HuggingFace",
+      modelName: "meta-llama/Meta-Llama-3-8B-Instruct",
+      apiKey: process.env.HUGGINGFACE_API_KEY,
+      baseURL: "https://api-inference.huggingface.co/v1",
+    },
   ];
 }
 
@@ -51,7 +57,7 @@ export async function invokeLLM(
   const activeProviders = getProviderChain().filter((p) => !!p.apiKey);
 
   if (activeProviders.length === 0) {
-    throw new Error("No LLM API keys configured (Groq, DeepSeek, or OpenRouter required).");
+    throw new Error("No LLM API keys configured (Groq, DeepSeek, OpenRouter, or HuggingFace required).");
   }
 
   for (const provider of activeProviders) {
