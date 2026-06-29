@@ -424,6 +424,181 @@
   margin-bottom: var(--space-xs);
 }
 
+/* ===== TOOLTIP SYSTEM ===== */
+.tooltipWrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: help;
+}
+
+.tooltipContent {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 280px;
+  padding: var(--space-md);
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 212, 170, 0.08);
+  z-index: 50;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+  transform: translateX(-50%) translateY(4px);
+}
+
+.tooltipWrapper:hover .tooltipContent {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+.tooltipContent::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: rgba(15, 23, 42, 0.95);
+}
+
+.tooltipTitle {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tooltipBody {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+
+.tooltipInterpretation {
+  font-size: 0.6875rem;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tooltipInterpretation[data-health="good"] {
+  background: rgba(0, 212, 170, 0.12);
+  color: var(--color-primary);
+  border: 1px solid rgba(0, 212, 170, 0.2);
+}
+
+.tooltipInterpretation[data-health="neutral"] {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--color-tertiary);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.tooltipInterpretation[data-health="bad"] {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--color-danger);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.helpIcon {
+  color: var(--text-dim);
+  opacity: 0.4;
+  transition: opacity var(--transition-fast), color var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.tooltipWrapper:hover .helpIcon {
+  opacity: 1;
+  color: var(--color-primary);
+}
+
+/* ===== HEALTH STATUS INDICATORS ===== */
+.healthDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.healthDot[data-health="good"] {
+  background: var(--color-primary);
+  box-shadow: 0 0 6px rgba(0, 212, 170, 0.4);
+}
+
+.healthDot[data-health="neutral"] {
+  background: var(--color-tertiary);
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.4);
+}
+
+.healthDot[data-health="bad"] {
+  background: var(--color-danger);
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.4);
+}
+
+/* ===== SENTIMENT BAR ===== */
+.sentimentBarContainer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-xs);
+}
+
+.sentimentBar {
+  flex: 1;
+  height: 4px;
+  background: rgba(148, 163, 184, 0.1);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  position: relative;
+}
+
+.sentimentBarFill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.6s ease;
+}
+
+/* ===== SEVERITY BAR ===== */
+.severityBar {
+  height: 3px;
+  border-radius: var(--radius-full);
+  margin-top: var(--space-sm);
+}
+
+.severityBar[data-severity="Low"] {
+  background: linear-gradient(90deg, var(--color-primary), transparent);
+  width: 25%;
+}
+
+.severityBar[data-severity="Medium"] {
+  background: linear-gradient(90deg, var(--color-tertiary), transparent);
+  width: 50%;
+}
+
+.severityBar[data-severity="High"] {
+  background: linear-gradient(90deg, var(--color-danger), transparent);
+  width: 75%;
+}
+
+.severityBar[data-severity="Critical"] {
+  background: linear-gradient(90deg, #dc2626, transparent);
+  width: 100%;
+}
+
 /* ===== FINANCIALS TAB ===== */
 .financialsTab {
   display: flex;
@@ -433,6 +608,32 @@
 
 .metricCard {
   text-align: left;
+  position: relative;
+  overflow: hidden;
+}
+
+.metricCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: var(--border-color);
+  transition: background var(--transition-base);
+}
+
+.metricCard[data-health="good"]::before {
+  background: linear-gradient(90deg, var(--color-primary), rgba(0, 212, 170, 0.3));
+}
+
+.metricCard[data-health="neutral"]::before {
+  background: linear-gradient(90deg, var(--color-tertiary), rgba(245, 158, 11, 0.3));
+}
+
+.metricCard[data-health="bad"]::before {
+  background: linear-gradient(90deg, var(--color-danger), rgba(239, 68, 68, 0.3));
 }
 
 .metricHeader {
@@ -481,17 +682,30 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
+  transition: background var(--transition-fast);
+}
+
+.ratioItem:hover {
+  background: rgba(148, 163, 184, 0.06);
 }
 
 .ratioLabel {
   font-size: 0.75rem;
   color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .ratioValue {
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
 }
 
 .summaryCard h4 {

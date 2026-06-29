@@ -25,6 +25,8 @@ import {
   Users,
   Shield,
   ExternalLink,
+  HelpCircle,
+  Info,
 } from "lucide-react";
 import type { ResearchState } from "@/lib/agent/state";
 import {
@@ -48,6 +50,143 @@ const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
   { key: "risk", label: "Risk Assessment", icon: ShieldAlert },
   { key: "memo", label: "Full Memo", icon: FileText },
 ];
+
+/* ===== METRIC TOOLTIPS ===== */
+interface MetricTooltipInfo {
+  title: string;
+  description: string;
+  getHealth: (value: number) => "good" | "neutral" | "bad";
+  getInterpretation: (value: number) => string;
+}
+
+const METRIC_TOOLTIPS: Record<string, MetricTooltipInfo> = {
+  "Market Cap": {
+    title: "Market Capitalization",
+    description: "Total market value of the company's outstanding shares. Large-cap (>$10B) companies tend to be more stable; small-cap (<$2B) can be more volatile but offer higher growth potential.",
+    getHealth: (v) => (v >= 10e9 ? "good" : v >= 2e9 ? "neutral" : "bad"),
+    getInterpretation: (v) =>
+      v >= 200e9 ? "Mega-cap · Very stable" : v >= 10e9 ? "Large-cap · Stable" : v >= 2e9 ? "Mid-cap · Moderate risk" : "Small-cap · Higher risk",
+  },
+  "Revenue Growth": {
+    title: "Year-over-Year Revenue Growth",
+    description: "How much the company's revenue has grown compared to the same period last year. Sustained growth above 15% is generally considered strong.",
+    getHealth: (v) => (v >= 10 ? "good" : v >= 0 ? "neutral" : "bad"),
+    getInterpretation: (v) =>
+      v >= 20 ? "Rapid growth" : v >= 10 ? "Healthy growth" : v >= 0 ? "Flat / slow growth" : "Revenue is declining",
+  },
+  "Profit Margin": {
+    title: "Net Profit Margin",
+    description: "Percentage of revenue that becomes profit after all expenses. Shows how efficiently the company converts sales into actual earnings.",
+    getHealth: (v) => (v >= 15 ? "good" : v >= 0 ? "neutral" : "bad"),
+    getInterpretation: (v) =>
+      v >= 20 ? "Excellent profitability" : v >= 10 ? "Good margins" : v >= 0 ? "Thin margins" : "Losing money",
+  },
+  "P/E Ratio": {
+    title: "Price-to-Earnings Ratio",
+    description: "How much investors pay per dollar of earnings. A high P/E may mean overvaluation or high growth expectations. A low P/E could signal undervaluation or concerns.",
+    getHealth: (v) => (v > 0 && v <= 25 ? "good" : v > 25 && v <= 35 ? "neutral" : "bad"),
+    getInterpretation: (v) =>
+      v <= 0 ? "Negative earnings" : v <= 15 ? "Undervalued / value stock" : v <= 25 ? "Fairly valued" : v <= 40 ? "Premium valuation" : "Very expensive",
+  },
+  ROE: {
+    title: "Return on Equity",
+    description: "How well the company uses shareholder money to generate profits. Measures management efficiency — higher is better.",
+    getHealth: (v) => (v >= 15 ? "good" : v >= 8 ? "neutral" : "bad"),
+    getInterpretation: (v) =>
+      v >= 20 ? "Excellent returns" : v >= 15 ? "Strong efficiency" : v >= 8 ? "Adequate" : "Poor capital efficiency",
+  },
+  "Operating Margin": {
+    title: "Operating Profit Margin",
+    description: "Revenue remaining after operating costs (before interest and taxes). Indicates core business profitability without financial engineering.",
+    getHealth: (v) => (v >= 15 ? "good" : v >= 5 ? "neutral" : "bad"),
+    getInterpretation: (v) =>
+      v >= 25 ? "Exceptional operations" : v >= 15 ? "Healthy operations" : v >= 5 ? "Moderate" : "Weak operations",
+  },
+  "Debt / Equity": {
+    title: "Debt-to-Equity Ratio",
+    description: "How much debt the company uses compared to shareholder equity. Lower is generally safer. Above 2.0 signals heavy leverage.",
+    getHealth: (v) => (v <= 0.5 ? "good" : v <= 1.5 ? "neutral" : "bad"),
+    getInterpretation: (v) =>
+      v <= 0.3 ? "Very conservative" : v <= 1.0 ? "Balanced" : v <= 2.0 ? "Moderate leverage" : "Highly leveraged",
+  },
+  "Current Ratio": {
+    title: "Current Ratio",
+    description: "Can the company pay its short-term bills? Compares current assets to current liabilities. Below 1.0 means it may struggle to meet obligations.",
+    getHealth: (v) => (v >= 1.5 ? "good" : v >= 1.0 ? "neutral" : "bad"),
+    getInterpretation: (v) =>
+      v >= 2.0 ? "Strong liquidity" : v >= 1.5 ? "Healthy" : v >= 1.0 ? "Adequate but tight" : "Liquidity risk",
+  },
+  Beta: {
+    title: "Beta (Volatility)",
+    description: "Measures how much the stock moves relative to the overall market. Beta of 1.0 = moves with the market. Above 1.5 = significantly more volatile.",
+    getHealth: (v) => (v >= 0.8 && v <= 1.2 ? "good" : v <= 1.5 ? "neutral" : "bad"),
+    getInterpretation: (v) =>
+      v < 0.5 ? "Very low volatility" : v <= 1.0 ? "Less volatile than market" : v <= 1.5 ? "Moderately volatile" : "Highly volatile",
+  },
+  "Dividend Yield": {
+    title: "Dividend Yield",
+    description: "Annual dividends as a percentage of the stock price. Income investors look for 2%+. Very high yields (>8%) may signal risk.",
+    getHealth: (v) => (v >= 1.5 && v <= 6 ? "good" : v > 0 ? "neutral" : "neutral"),
+    getInterpretation: (v) =>
+      v <= 0 ? "No dividend" : v < 2 ? "Low yield" : v <= 4 ? "Good income stock" : v <= 7 ? "High yield" : "Unusually high — check sustainability",
+  },
+  "52 Week High": {
+    title: "52-Week High",
+    description: "The highest price this stock has traded at in the past year. Comparing to the current price shows if the stock is near its peak or has pulled back.",
+    getHealth: () => "neutral",
+    getInterpretation: () => "Reference point for recent range",
+  },
+  "52 Week Low": {
+    title: "52-Week Low",
+    description: "The lowest price this stock has traded at in the past year. Useful to gauge how much downside the stock has already experienced.",
+    getHealth: () => "neutral",
+    getInterpretation: () => "Reference point for recent range",
+  },
+};
+
+function getMetricRawValue(label: string, data: NonNullable<ResearchState["financialData"]>): number {
+  switch (label) {
+    case "Market Cap": return data.marketCap;
+    case "Revenue Growth": return data.revenueGrowth;
+    case "Profit Margin": return data.profitMargin;
+    case "P/E Ratio": return data.peRatio;
+    case "ROE": return data.roe;
+    case "Operating Margin": return data.operatingMargin;
+    case "Debt / Equity": return data.debtToEquity;
+    case "Current Ratio": return data.currentRatio;
+    case "Beta": return data.beta;
+    case "Dividend Yield": return data.dividendYield;
+    case "52 Week High": return data.fiftyTwoWeekHigh;
+    case "52 Week Low": return data.fiftyTwoWeekLow;
+    default: return 0;
+  }
+}
+
+/* ===== TOOLTIP COMPONENT ===== */
+function MetricTooltip({ label, value, children }: { label: string; value: number; children: React.ReactNode }) {
+  const info = METRIC_TOOLTIPS[label];
+  if (!info) return <>{children}</>;
+
+  const health = info.getHealth(value);
+  const interpretation = info.getInterpretation(value);
+
+  return (
+    <div className={styles.tooltipWrapper}>
+      {children}
+      <HelpCircle size={12} className={styles.helpIcon} />
+      <div className={styles.tooltipContent}>
+        <div className={styles.tooltipTitle}>
+          <Info size={12} /> {info.title}
+        </div>
+        <div className={styles.tooltipBody}>{info.description}</div>
+        <div className={styles.tooltipInterpretation} data-health={health}>
+          <span className={styles.healthDot} data-health={health} />
+          {interpretation}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function ResearchContent() {
   const searchParams = useSearchParams();
@@ -296,9 +435,24 @@ function ResearchContent() {
                   >
                     {decision.verdict.toUpperCase()}
                   </span>
-                  <span className={styles.verdictConfidence}>
-                    Confidence: {decision.confidenceScore}/100
-                  </span>
+                  <div className={styles.tooltipWrapper}>
+                    <span className={styles.verdictConfidence}>
+                      Confidence: {decision.confidenceScore}/100
+                    </span>
+                    <HelpCircle size={12} className={styles.helpIcon} />
+                    <div className={styles.tooltipContent}>
+                      <div className={styles.tooltipTitle}>
+                        <Info size={12} /> Confidence Score
+                      </div>
+                      <div className={styles.tooltipBody}>
+                        How confident the AI is in its verdict, from 0 (no confidence) to 100 (extremely confident). Based on data quality, consistency across sources, and strength of financial signals.
+                      </div>
+                      <div className={styles.tooltipInterpretation} data-health={decision.confidenceScore >= 70 ? "good" : decision.confidenceScore >= 40 ? "neutral" : "bad"}>
+                        <span className={styles.healthDot} data-health={decision.confidenceScore >= 70 ? "good" : decision.confidenceScore >= 40 ? "neutral" : "bad"} />
+                        {decision.confidenceScore >= 80 ? "Very high confidence" : decision.confidenceScore >= 60 ? "Moderate confidence" : decision.confidenceScore >= 40 ? "Low confidence — more research recommended" : "Very low — treat with caution"}
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <div className={styles.verdictScore}>
                   <span
@@ -469,34 +623,51 @@ function FinancialsTab({
   return (
     <div className={styles.financialsTab}>
       <div className="grid-4">
-        {metrics.map((m) => (
-          <div key={m.label} className={`glass-card ${styles.metricCard}`}>
-            <div className={styles.metricHeader}>
-              <m.icon size={16} className={styles.metricIcon} />
-              <span className={styles.metricLabel}>{m.label}</span>
+        {metrics.map((m) => {
+          const rawVal = getMetricRawValue(m.label, data);
+          const info = METRIC_TOOLTIPS[m.label];
+          const health = info?.getHealth(rawVal) || "neutral";
+          return (
+            <div key={m.label} className={`glass-card ${styles.metricCard}`} data-health={health}>
+              <div className={styles.metricHeader}>
+                <m.icon size={16} className={styles.metricIcon} />
+                <MetricTooltip label={m.label} value={rawVal}>
+                  <span className={styles.metricLabel}>{m.label}</span>
+                </MetricTooltip>
+              </div>
+              <span
+                className={`${styles.metricValue} mono`}
+                style={{ color: m.color }}
+              >
+                {m.value}
+              </span>
+              {m.sub && (
+                <span className={styles.metricSub}>{m.sub}</span>
+              )}
             </div>
-            <span
-              className={`${styles.metricValue} mono`}
-              style={{ color: m.color }}
-            >
-              {m.value}
-            </span>
-            {m.sub && (
-              <span className={styles.metricSub}>{m.sub}</span>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className={`glass-card ${styles.ratiosCard}`}>
         <h4>Key Financial Ratios</h4>
         <div className={styles.ratiosGrid}>
-          {ratios.map((r) => (
-            <div key={r.label} className={styles.ratioItem}>
-              <span className={styles.ratioLabel}>{r.label}</span>
-              <span className={`${styles.ratioValue} mono`}>{r.value}</span>
-            </div>
-          ))}
+          {ratios.map((r) => {
+            const rawVal = getMetricRawValue(r.label, data);
+            const info = METRIC_TOOLTIPS[r.label];
+            const health = info?.getHealth(rawVal) || "neutral";
+            return (
+              <div key={r.label} className={styles.ratioItem}>
+                <MetricTooltip label={r.label} value={rawVal}>
+                  <span className={styles.ratioLabel}>{r.label}</span>
+                </MetricTooltip>
+                <span className={`${styles.ratioValue} mono`}>
+                  <span className={styles.healthDot} data-health={health} />
+                  {r.value}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -539,7 +710,22 @@ function NewsTab({
       {/* Sentiment Overview */}
       <div className={`glass-card-glow ${styles.sentimentOverview}`}>
         <div className={styles.sentimentHeader}>
-          <h4>Overall Sentiment</h4>
+          <div className={styles.tooltipWrapper}>
+            <h4>Overall Sentiment</h4>
+            <HelpCircle size={14} className={styles.helpIcon} />
+            <div className={styles.tooltipContent}>
+              <div className={styles.tooltipTitle}>
+                <Info size={12} /> Sentiment Score
+              </div>
+              <div className={styles.tooltipBody}>
+                Ranges from -1.0 (very bearish) to +1.0 (very bullish). Calculated by analyzing recent news headlines and article content using AI-powered natural language processing.
+              </div>
+              <div className={styles.tooltipInterpretation} data-health={data.overallSentiment >= 0.1 ? "good" : data.overallSentiment >= -0.1 ? "neutral" : "bad"}>
+                <span className={styles.healthDot} data-health={data.overallSentiment >= 0.1 ? "good" : data.overallSentiment >= -0.1 ? "neutral" : "bad"} />
+                {data.overallSentiment >= 0.5 ? "Strong positive sentiment" : data.overallSentiment >= 0.1 ? "Mildly positive" : data.overallSentiment >= -0.1 ? "Neutral / mixed signals" : data.overallSentiment >= -0.5 ? "Mildly negative" : "Strong negative sentiment"}
+              </div>
+            </div>
+          </div>
           <span
             className={styles.sentimentBadge}
             style={{
@@ -606,6 +792,17 @@ function NewsTab({
                 {article.sentiment >= 0 ? "+" : ""}
                 {article.sentiment.toFixed(2)}
               </span>
+              <div className={styles.sentimentBarContainer}>
+                <div className={styles.sentimentBar}>
+                  <div
+                    className={styles.sentimentBarFill}
+                    style={{
+                      width: `${((article.sentiment + 1) / 2) * 100}%`,
+                      background: getSentimentColor(article.sentiment),
+                    }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         ))}
@@ -627,9 +824,24 @@ function CompetitionTab({
         <div className={`glass-card-glow ${styles.positionCard}`}>
           <h4>Market Position</h4>
           <p>{data.marketPosition}</p>
-          <div className={styles.moatBadge}>
-            <Shield size={16} />
-            <span>Moat: {data.moatRating}</span>
+          <div className={styles.tooltipWrapper}>
+            <div className={styles.moatBadge}>
+              <Shield size={16} />
+              <span>Moat: {data.moatRating}</span>
+            </div>
+            <HelpCircle size={12} className={styles.helpIcon} />
+            <div className={styles.tooltipContent}>
+              <div className={styles.tooltipTitle}>
+                <Info size={12} /> Economic Moat
+              </div>
+              <div className={styles.tooltipBody}>
+                An economic moat is a company&apos;s ability to maintain competitive advantages and protect long-term profits. Wide moats are rare and highly valued by investors.
+              </div>
+              <div className={styles.tooltipInterpretation} data-health={data.moatRating === "Wide" ? "good" : data.moatRating === "Narrow" ? "neutral" : "bad"}>
+                <span className={styles.healthDot} data-health={data.moatRating === "Wide" ? "good" : data.moatRating === "Narrow" ? "neutral" : "bad"} />
+                {data.moatRating === "Wide" ? "Strong competitive fortress" : data.moatRating === "Narrow" ? "Some competitive protection" : "Vulnerable to competition"}
+              </div>
+            </div>
           </div>
           <p className={styles.marketShare}>{data.marketShare}</p>
         </div>
@@ -707,7 +919,22 @@ function RiskTab({
         }}
       >
         <div className={styles.riskScoreHeader}>
-          <h4>Overall Risk Score</h4>
+          <div className={styles.tooltipWrapper}>
+            <h4>Overall Risk Score</h4>
+            <HelpCircle size={14} className={styles.helpIcon} />
+            <div className={styles.tooltipContent}>
+              <div className={styles.tooltipTitle}>
+                <Info size={12} /> Risk Score
+              </div>
+              <div className={styles.tooltipBody}>
+                Composite score from 1 (very low risk) to 10 (extreme risk). Synthesized from financial health, market volatility, competitive position, and news sentiment analysis.
+              </div>
+              <div className={styles.tooltipInterpretation} data-health={data.riskScore <= 3 ? "good" : data.riskScore <= 6 ? "neutral" : "bad"}>
+                <span className={styles.healthDot} data-health={data.riskScore <= 3 ? "good" : data.riskScore <= 6 ? "neutral" : "bad"} />
+                {data.riskScore <= 3 ? "Low risk investment" : data.riskScore <= 6 ? "Moderate risk — monitor closely" : "High risk — proceed with caution"}
+              </div>
+            </div>
+          </div>
           <div className={styles.riskScoreDisplay}>
             <span
               className={styles.riskScoreNumber}
@@ -753,6 +980,7 @@ function RiskTab({
               </span>
             </div>
             <p className={styles.riskDescription}>{risk.description}</p>
+            <div className={styles.severityBar} data-severity={risk.severity} />
           </div>
         ))}
       </div>
