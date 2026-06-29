@@ -775,25 +775,34 @@
 
 .sourceBreakdown {
   display: flex;
-  gap: var(--space-md);
+  gap: var(--space-sm);
+  flex-wrap: wrap;
   padding-top: var(--space-md);
   border-top: 1px solid var(--border-color);
 }
 
 .sourceItem {
   font-size: 0.75rem;
-  color: var(--text-dim);
+  color: var(--text-secondary);
+  background: rgba(148, 163, 184, 0.1);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
   font-family: var(--font-jetbrains-mono), monospace;
+  display: inline-flex;
+  align-items: center;
 }
 
 .articlesList {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-md);
 }
 
 .articleCard {
   padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .articleHeader {
@@ -823,6 +832,8 @@
   font-weight: 500;
   color: var(--text-primary);
   line-height: 1.5;
+  flex: 1;
+  margin-bottom: var(--space-md);
 }
 
 .articleTitle:hover {
@@ -833,7 +844,9 @@
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  margin-top: var(--space-sm);
+  margin-top: auto;
+  padding-top: var(--space-sm);
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
 }
 
 .sentimentDot {
