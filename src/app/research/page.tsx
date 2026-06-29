@@ -168,6 +168,11 @@ function ResearchContent() {
   }
 
   if (error) {
+    const isRateLimit = error.toLowerCase().includes("429") || 
+                        error.toLowerCase().includes("rate limit") || 
+                        error.toLowerCase().includes("quota") || 
+                        error.toLowerCase().includes("too many requests");
+
     return (
       <main className={styles.main}>
         <nav className={styles.navbar}>
@@ -179,12 +184,35 @@ function ResearchContent() {
           </div>
         </nav>
         <div className={styles.errorContainer}>
-          <XCircle size={48} className={styles.errorIcon} />
-          <h2>Research Failed</h2>
-          <p>{error}</p>
-          <button className="btn btn-primary" onClick={() => router.push("/")}>
-            <ArrowLeft size={18} /> Try Again
-          </button>
+          {isRateLimit ? (
+            <AlertCircle size={48} style={{ color: "#f59e0b", marginBottom: "1rem" }} />
+          ) : (
+            <XCircle size={48} className={styles.errorIcon} />
+          )}
+          
+          <h2>{isRateLimit ? "AI Rate Limit Reached" : "Research Failed"}</h2>
+          
+          {isRateLimit ? (
+            <div className={styles.errorDetails}>
+              <p>We've temporarily hit the usage limits for our AI models. This usually resets in a few minutes.</p>
+              <div className={styles.errorSubDetails}>
+                <strong>Technical details:</strong> {error}
+              </div>
+            </div>
+          ) : (
+            <p>{error}</p>
+          )}
+          
+          <div style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
+            {isRateLimit ? (
+              <button className="btn btn-primary" onClick={() => window.location.reload()}>
+                <Clock size={18} style={{ marginRight: '8px' }} /> Try Again Now
+              </button>
+            ) : null}
+            <button className={isRateLimit ? "btn btn-secondary" : "btn btn-primary"} onClick={() => router.push("/")}>
+              <ArrowLeft size={18} /> {isRateLimit ? "New Search" : "Try Again"}
+            </button>
+          </div>
         </div>
       </main>
     );

@@ -179,6 +179,26 @@
   color: var(--color-danger);
 }
 
+.errorDetails {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  max-width: 500px;
+  margin: var(--space-sm) auto var(--space-md);
+}
+
+.errorSubDetails {
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.875rem;
+  color: var(--text-dim);
+  text-align: left;
+  font-family: var(--font-mono);
+  word-break: break-all;
+}
+
 /* ===== DASHBOARD ===== */
 .dashboard {
   padding-top: calc(var(--header-height) + var(--space-xl));
