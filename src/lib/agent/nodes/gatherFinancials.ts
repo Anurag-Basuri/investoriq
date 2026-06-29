@@ -56,6 +56,7 @@ export async function gatherFinancialsNode(
 
     // Merge data from multiple sources (Yahoo primary, Alpha fallback)
     const financialData: FinancialData = {
+      currency: quote?.currency || "USD",
       currentPrice: quote?.currentPrice || 0,
       priceChange: {
         amount: quote?.priceChange || 0,

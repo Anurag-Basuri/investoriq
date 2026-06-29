@@ -18,6 +18,7 @@ export interface QuarterlyRevenue {
 }
 
 export interface FinancialData {
+  currency: string;
   currentPrice: number;
   priceChange: PriceChange;
   marketCap: number;
