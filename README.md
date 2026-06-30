@@ -30,10 +30,11 @@ InvestorIQ is designed to be plug-and-play. You can run it locally with minimal 
 ### Prerequisites
 - **Node.js** (v18 or newer)
 - **Git** (to clone the repository)
-- **API Keys**: The system uses a highly resilient multi-provider LLM chain. You must provide at least *one* of the following free LLM API keys. (Providing all three guarantees 100% uptime through automatic failover):
+- **API Keys**: The system uses an incredibly resilient **4-layer multi-provider LLM chain**. You must provide at least *one* of the following free LLM API keys. (Providing all four guarantees near 100% uptime through automatic failover):
   - 🔑 **Groq API Key (Primary):** Extremely fast inference using Llama 3. Get a free key at [console.groq.com](https://console.groq.com/).
   - 🔑 **DeepSeek API Key (Secondary):** Deep reasoning fallback. Get a free key at [platform.deepseek.com](https://platform.deepseek.com/).
   - 🔑 **OpenRouter API Key (Tertiary):** Aggregator fallback. Get a free key at [openrouter.ai](https://openrouter.ai/).
+  - 🔑 **Hugging Face API Key (Quaternary):** Uses the new Featherless AI router proxy for Qwen/Llama fallback without hardware locks. Get a free key at [huggingface.co](https://huggingface.co/).
 
 ### Step-by-Step Setup
 
@@ -58,6 +59,7 @@ InvestorIQ is designed to be plug-and-play. You can run it locally with minimal 
    GROQ_API_KEY=gsk_your_key_here
    DEEPSEEK_API_KEY=sk_your_key_here
    OPENROUTER_API_KEY=sk_your_key_here
+   HUGGINGFACE_API_KEY=hf_your_key_here
    ALPHA_VANTAGE_API_KEY=your_key_here # Optional, provides fallback financial data
    ```
 
@@ -79,7 +81,7 @@ InvestorIQ abandons the traditional "single prompt" approach in favor of a **sta
 
 1. **The Client Layer (Next.js App Router):** A highly responsive React frontend featuring glassmorphic UI elements and animated agent state tracking.
 2. **The API Layer (Serverless):** A Next.js API Route (`/api/research`) that acts as the entry point for the LangGraph pipeline.
-3. **The Brain (LangGraph + Multi-Provider LLM):** A state machine that routes data between 6 specialized AI agents. It utilizes a custom Fallback Chain (Groq → DeepSeek → OpenRouter) to ensure that if one LLM provider goes down or hits a rate limit, the system gracefully recovers without failing the user's request.
+3. **The Brain (LangGraph + Multi-Provider LLM):** A state machine that routes data between 6 specialized AI agents. It utilizes a custom **4-Layer Fallback Chain** (Groq → DeepSeek → OpenRouter → Hugging Face) to ensure that if one LLM provider goes down or hits a rate limit, the system gracefully recovers without failing the user's request.
 
 ### The LangGraph Agent Pipeline
 
@@ -134,8 +136,9 @@ graph TD
 2. **Analysis Pipeline**: The user is redirected to a loading screen. Here, they see a real-time, step-by-step pipeline visualization as the 6 LangGraph agents sequentially trigger, fetch data, and process insights.
 3. **Verdict**: Once the AI completes its reasoning (typically 7-12 seconds), the user is presented with the final results dashboard.
 4. **Dashboard Exploration**:
-   - The user immediately sees the **Target Verdict** (Buy/Hold/Sell) and a **Confidence Score** out of 100.
-   - The user can click through the 5 tabs to deeply explore the LLM's reasoning: analyzing financial tables, reading sentiment-scored news articles, viewing the competitive moat rating, and reading the detailed Bull/Bear investment memo.
+   - The user immediately sees the **Target Verdict** (Buy/Hold/Sell) and a **Confidence Score** out of 100, styled with a **premium dark finance theme** using vibrant accents and glassmorphic cards.
+   - Every metric card features **interactive tooltips** that explain exactly what the financial ratio means on hover.
+   - The user can click through the 5 tabs to deeply explore the LLM's reasoning: analyzing financial tables (with color-coded health dots), reading sentiment-scored news articles (with interactive source badges in a clean grid layout), viewing the competitive moat rating, and reading the detailed Bull/Bear investment memo.
 5. **Agent Activity**: An animated sidebar shows the exact timestamps and decisions made by the LLM during the pipeline execution.
 
 ---
